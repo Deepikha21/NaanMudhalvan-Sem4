@@ -1,0 +1,97 @@
+const express = require('express');
+const app = express();
+const PORT = 3000;
+
+// Sample Data
+const inventory = [
+  { name: 'Item A', quantity: 120 },
+  { name: 'Item B', quantity: 60 },
+  { name: 'Item C', quantity: 200 },
+];
+
+const orders = [
+  { id: '001', status: 'Shipped' },
+  { id: '002', status: 'Processing' },
+  { id: '003', status: 'Delivered' },
+];
+
+// API Endpoints
+app.get('/api/inventory', (req, res) => {
+  res.json(inventory);
+});
+
+app.get('/api/orders', (req, res) => {
+  res.json(orders);
+});
+
+// Serve HTML
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>SCM Dashboard</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
+        nav button { margin: 0 10px; padding: 0.5rem 1rem; cursor: pointer; }
+        main { padding: 1rem; }
+        section { display: none; }
+        section.active { display: block; }
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>Supply Chain Management</h1>
+        <nav>
+          <button onclick="showSection('inventory')">Inventory</button>
+          <button onclick="showSection('orders')">Orders</button>
+        </nav>
+      </header>
+      <main>
+        <section id="inventory" class="active">
+          <h2>Inventory</h2>
+          <ul id="inventoryList"></ul>
+        </section>
+        <section id="orders">
+          <h2>Orders</h2>
+          <ul id="orderList"></ul>
+        </section>
+      </main>
+      <script>
+        function showSection(id) {
+          document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+          document.getElementById(id).classList.add('active');
+        }
+
+        async function fetchData(endpoint, listId) {
+          const res = await fetch(\`/api/\${endpoint}\`);
+          const data = await res.json();
+          const list = document.getElementById(listId);
+          list.innerHTML = '';
+          data.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = endpoint === 'inventory'
+              ? \`\${item.name} - \${item.quantity} units\`
+              : \`Order #\${item.id} - \${item.status}\`;
+            list.appendChild(li);
+          });
+        }
+
+        window.onload = () => {
+          fetchData('inventory', 'inventoryList');
+          fetchData('orders', 'orderList');
+          showSection('inventory');
+        };
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(\`Server running at http://localhost:\${PORT}\`);
+});
